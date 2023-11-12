@@ -9,12 +9,13 @@ pub fn is_palindrome(mut x: i32) -> bool {
         }
         if digits.len() != 0 {
             let mut i:usize = digits.len()- 1;
-            let mut j:usize = 0;
+            let mut j:usize = 0; 
         
             while j < i {
                 if digits[j] != digits[i] {
                     return false;
                 }
+
                 i-=1;
                 j+=1;
             }
