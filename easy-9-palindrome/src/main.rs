@@ -1,3 +1,5 @@
+mod solution;
+
 fn main() {
-    println!("Hello, world!");
+    println!("{}", solution::is_palindrome(1001));
 }
