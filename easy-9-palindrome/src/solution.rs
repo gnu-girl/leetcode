@@ -16,6 +16,7 @@ pub fn is_palindrome(mut x: i32) -> bool {
                     return false;
                 }
 
+                
                 i-=1;
                 j+=1;
             }
