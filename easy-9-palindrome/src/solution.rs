@@ -15,8 +15,8 @@ pub fn is_palindrome(mut x: i32) -> bool {
                 if digits[j] != digits[i] {
                     return false;
                 }
-                i-=1;
-                j+=1;
+                i += 1;
+                j += 1;
             }
         }
 
