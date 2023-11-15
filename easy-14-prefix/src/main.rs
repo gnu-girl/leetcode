@@ -3,10 +3,8 @@ use std::env;
 mod solution;
 
 fn main() {
+    // Only get command line args and ignore file path
+    let args: Vec<String>= env::args().skip(1).collect();
 
-    let mut args: Vec<String>= env::args().skip(0).collect();
-
-    // Remove the first element of the call (file path)
-    args.remove(0);
     println!("input:   {:?}\nsolution: {:?}",args, solution::longest_common_prefix(&args));
 }
