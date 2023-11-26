@@ -1,4 +1,5 @@
 use core::fmt;
+use std::{cmp::{self, max}, ops::Deref};
 
 /// Define our list as singly-linked
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -15,12 +16,50 @@ impl ListNode {
       val
     }
   }
+
+  /// Reuturns the number of nodes in the given list
+  pub fn length(&self) -> i32{
+    let mut l1 = self;
+    let mut i = 0;
+
+        while l1.next != None {
+            l1 = l1.next.as_ref().unwrap();
+            i += 1;
+        }
+
+    i + 1
+  }
+
+  /// Add and return a new node to a given list
   pub fn add(self, val: i32) -> ListNode{
     let new_node = ListNode {
         val: val,
         next: Some(Box::new(self))
     };
     new_node
+  }
+
+  /// Returns a modified list with padded zeros inserted at the beginning until list is digits numbered of nodes long
+  pub fn pad_zeros(self, digits: i32) -> ListNode {
+
+    let mut l1 = self;
+
+        for i in 0..digits {
+            l1 = l1.add(0);
+        }
+    l1
+  }
+
+  /// Returns a new list in modified order of the original
+  pub fn reverse(self) -> ListNode {
+    let mut l1 = self;
+    let mut return_list = ListNode::new(l1.val);
+
+    while l1.next.is_some() {
+        l1 = *l1.next.unwrap();
+        return_list = return_list.add(l1.val)
+    }
+    return_list
   }
 }
 
@@ -40,14 +79,12 @@ impl fmt::Display for ListNode {
     }
 }
 
-// Leetcode provides the input as this structure - adding this so local structure matches
+// Leetcode provides the input as this structure - adding this as extra challenge to convert string to list
 pub fn convert_to_list(strs: &Vec<String>) -> Option<Box<ListNode>>  {
     
     // TODO: Make this not jank - have to do this to prime the loop
     let mut str1:String = strs[0].clone().chars().collect::<String>();
     let mut str2:String = strs[1].clone().chars().collect::<String>();    
-    // let n1: i32 = 0;
-    // let n2: i32 = 0;
 
     /* Since we are manually addng the first charachter of each string to the list, 
         remove it from the given list so it will work with our loop logic
@@ -72,82 +109,68 @@ pub fn convert_to_list(strs: &Vec<String>) -> Option<Box<ListNode>>  {
                     .to_digit(10)
                     .unwrap() as i32
                 );
-
-    
-    // println!("NEW STRING ISSSS - {:?}", str1);
-
-    let cpy = l1.clone();
-    for (i,element) in str1.chars().rev().enumerate() {
+    for (_,element) in str1.chars().rev().enumerate() {
         l1 = l1.add(element.to_digit(10).unwrap() as i32);
         
     }
 
-    for (i,element) in str2.chars().rev().enumerate() {
+    for (_,element) in str2.chars().rev().enumerate() {
         l2 = l2.add(element.to_digit(10).unwrap() as i32);
     }
-        
-    println!("L1 = {}\nL2 = {}", l1, l2);
 
-    add_two_numbers(Some(Box::new(l1)), Some(Box::new(l2)))
+    add(Some(Box::new(l1)), Some(Box::new(l2)))
 
 }
 
-pub fn add_two_numbers(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
-    
-    let mut l1_ref = &l1;
-    let mut l2_ref = &l2;
-    let mut l1_str = String::new();
-    let mut l2_str = String::new();
-    let mut return_string:ListNode;
+pub fn add(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    let mut carry = 0;
+    let mx_digs = max(l1.as_ref().unwrap().length(),l2.as_ref().unwrap().length());
+    let l1_digs = l1.as_ref().unwrap().length();
+    let l2_digs = l2.as_ref().unwrap().length();
+    let mut l1_ref = Some(Box::new(l1.as_ref().unwrap().clone().reverse().pad_zeros(mx_digs - l1_digs).reverse()));
+    let mut l2_ref = Some(Box::new(l2.as_ref().unwrap().clone().reverse().pad_zeros(mx_digs - l2_digs).reverse()));
+    let mut return_list = ListNode::new(l1_ref.as_ref().unwrap().val + l2_ref.as_ref().unwrap().val);
 
-    let mut l1_num: i64 = 0;
-    let mut l2_num: i64 = 0;
-    let mut i = 0;
-    let mut j = 0;
+    // Uncomment for debugigng output
+    // println!("L1 = {}\nL2 = {}",l1_ref.as_ref().unwrap(), l2_ref.as_ref().unwrap());
+    // println!("[-1] {:?} + {:?} = {:?}",l1_ref.clone().unwrap().val, l2_ref.clone().unwrap().val, return_list.val);
 
-    while l1_ref.as_ref().unwrap().next != None {
-        // l1_num += i64::pow(10, i) * l1_ref.as_ref().unwrap().val as i64;
-        l1_str.push(std::char::from_digit(l1_ref.as_ref().unwrap().val.try_into().unwrap(), 10).unwrap());
-        l1_ref = &l1_ref.as_ref().unwrap().next;
-        // i += 1;
+    // Handle carry if it occurs on first digit
+    if return_list.val >= 10 {
+        return_list.val %= 10;
+        carry = 1;
     }
 
-    while l2_ref.as_ref().unwrap().next != None {
-        l2_num += i64::pow(10, j) * l2_ref.as_ref().unwrap().val as i64;
+    // Manually progress list to second node
+    l1_ref = l1_ref.unwrap().next;
+    l2_ref = l2_ref.unwrap().next;
 
-        l2_ref = &l2_ref.as_ref().unwrap().next;
-        j += 1;
+    // Iterate through the list of nodes and add them, handling carrys on next loop iteration
+    for i in 0..max(l1.unwrap().length(),l2.unwrap().length()) {
+        if l1_ref.as_ref().is_some() && l2_ref.as_ref().is_some(){
+            if l1_ref.as_ref().unwrap().val + l2_ref.as_ref().unwrap().val + carry >= 10 {
+                return_list = return_list.add((l1_ref.as_ref().unwrap().val + l2_ref.as_ref().unwrap().val + carry) % 10);
+                
+                // Uncomment for debugging
+                // println!("[{:?}] {:?} + {:?} + {:?} = {:?}",i, l1_ref.as_ref().unwrap().val, l2_ref.as_ref().unwrap().val, carry, return_list.val);
+                carry = 1;
+            }
+            else {
+                return_list = return_list.add(l1_ref.as_ref().unwrap().val + l2_ref.as_ref().unwrap().val + carry);
+                // Uncomment for debugging
+                // println!("[{:?}] {:?} + {:?} + {:?} = {:?}",i, l1_ref.as_ref().unwrap().val, l2_ref.as_ref().unwrap().val, carry, return_list.val);
+                carry = 0;
+            }
+            
+            // Advance loop forward to next node
+            l1_ref = l1_ref.unwrap().next;
+            l2_ref = l2_ref.unwrap().next;
+        }   
+    }
+    if carry == 1 {
+        return_list = return_list.add(1);
     }
 
-    l1_num += i64::pow(10, i) * l1_ref.as_ref().unwrap().val as i64;
-    l2_num += i64::pow(10, j) * l2_ref.as_ref().unwrap().val as i64;
-    
-    // Uncomment for debugging the numeric representation of the lists
-    println!("l1_num = {:?}", l1_num);
-    println!("l2_num = {:?}", l2_num);
-    // println!("l2_num = {:?}", l2_num);
-
-    let mut sum = (l1_num+l2_num)
-        .to_string()
-        .chars()
-        .collect::<String>();
-
-    return_string = ListNode:: new(
-        sum
-            .chars()
-            .nth(0)
-            .unwrap()
-            .to_digit(10)
-            .unwrap() as i32
-    );
-    // Remove the first strng charachte rthat we've already added to the list
-    sum.remove(0);
-
-    // Add remainig string charachters as list nodes
-    for digit in sum.chars() {
-        return_string = return_string.add(digit.to_digit(10).unwrap() as i32);
-    }
-
-    Some(Box::new(return_string))
-        
+    // Reverse output as per leetcode instructions
+    Some(Box::new(return_list.reverse()))   
 }
